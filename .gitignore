@@ -1,7 +1,5 @@
-# Dependências do Node.js
-# Esta pasta é recriada com o comando 'npm install'
-/node_modules
+# Dependências
+node_modules/
 
-# Arquivo de variáveis de ambiente
-# Contém senhas e chaves de API, NUNCA deve ir para o repositório.
+# Arquivos de ambiente
 .env

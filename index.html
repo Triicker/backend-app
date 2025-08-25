@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login</title>
+</head>
+<body>
+    <h1>Teste de Login</h1>
+    <form id="loginForm">
+        <div>
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha" name="senha" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    <hr>
+    <h3>Resposta do Servidor:</h3>
+    <pre id="response"></pre>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const senha = document.getElementById('senha').value;
+            const responseElement = document.getElementById('response');
+
+            responseElement.textContent = 'Enviando...';
+
+            try {
+                const response = await fetch('http://localhost:3000/login', { // Verifique se a porta está correta
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, senha })
+                });
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = 'Erro na requisição: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
+
