@@ -6,6 +6,11 @@ const router = Router();
 // CREATE - Adicionar uma nova pontuação
 router.post('/', async (req, res) => {
     const { id_usuario, id_jogo, pontuacao } = req.body;
+
+    if (!id_usuario || !id_jogo || pontuacao === undefined) {
+        return res.status(400).json({ error: 'Os campos id_usuario, id_jogo e pontuacao são obrigatórios.' });
+    }
+
     try {
         const newScore = await pool.query(
             'INSERT INTO pontuacoes (id_usuario, id_jogo, pontuacao) VALUES ($1, $2, $3) RETURNING *',
@@ -25,7 +30,7 @@ router.get('/', async (req, res) => {
         res.json(allScores.rows);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Erro no servidor');
+        res.status(500).json({ error: 'Erro no servidor', details: err.message });
     }
 });
 
@@ -37,7 +42,7 @@ router.get('/usuario/:id_usuario', async (req, res) => {
         res.json(userScores.rows);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Erro no servidor');
+        res.status(500).json({ error: 'Erro no servidor', details: err.message });
     }
 });
 
@@ -45,6 +50,11 @@ router.get('/usuario/:id_usuario', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { pontuacao } = req.body;
+
+    if (pontuacao === undefined || typeof pontuacao !== 'number') {
+        return res.status(400).json({ error: "O campo 'pontuacao' é obrigatório e deve ser um número." });
+    }
+
     try {
         const updatedScore = await pool.query(
             'UPDATE pontuacoes SET pontuacao = $1, data_registro = NOW() WHERE id = $2 RETURNING *',
@@ -71,7 +81,7 @@ router.delete('/:id', async (req, res) => {
         res.json({ message: 'Pontuação deletada com sucesso!' });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Erro no servidor');
+        res.status(500).json({ error: 'Erro no servidor', details: err.message });
     }
 });
 

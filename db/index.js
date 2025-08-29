@@ -1,20 +1,20 @@
-import 'dotenv/config';
 import pg from 'pg';
+
+// Este arquivo assume que você está usando a biblioteca 'pg' (node-postgres)
 
 const { Pool } = pg;
 
-// A biblioteca 'pg' usará automaticamente as variáveis de ambiente PGUSER, PGHOST, PGDATABASE, PGPASSWORD, e PGPORT
-const pool = new Pool();
+// A Render.com define a variável de ambiente DATABASE_URL automaticamente
+// para o seu serviço de banco de dados PostgreSQL.
+// Para desenvolvimento local, você pode definir essa variável em seu arquivo .env
+const connectionString = process.env.DATABASE_URL;
 
-pool.connect((err) => {
-    if (err) {
-        console.error('❌ Falha ao conectar com o banco de dados PostgreSQL', err.stack);
-    } else {
-        console.log('✅ Conexão com o banco de dados estabelecida com sucesso!');
-    }
+const pool = new Pool({
+  connectionString,
+  // Em produção (na Render), é recomendado/necessário usar SSL.
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-// Exportamos um objeto com um método query para que o resto da aplicação possa usá-lo
 export default {
-    query: (text, params) => pool.query(text, params),
+  query: (text, params) => pool.query(text, params),
 };

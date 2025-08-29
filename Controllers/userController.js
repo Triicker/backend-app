@@ -31,7 +31,7 @@ export const createUser = async (req, res, next) => {
 
 export const getAllUsers = async (req, res, next) => {
     try {
-        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE ativo = true ORDER BY nome ASC`);
+        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE ativo = 1 ORDER BY nome ASC`);
         res.status(200).json(result.rows);
     } catch (error) {
         next(error);
@@ -41,7 +41,7 @@ export const getAllUsers = async (req, res, next) => {
 export const getUserById = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE id = $1 AND ativo = true`, [id]);
+        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE id = $1 AND ativo = 1`, [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
@@ -53,7 +53,7 @@ export const getUserById = async (req, res, next) => {
 
 export const getUsersByRole = (roleId) => async (req, res, next) => {
     try {
-        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE id_papel = $1 AND ativo = true ORDER BY nome ASC`, [roleId]);
+        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE id_papel = $1 AND ativo = 1 ORDER BY nome ASC`, [roleId]);
         res.status(200).json(result.rows);
     } catch (error) {
         next(error);
@@ -66,7 +66,7 @@ export const updateUser = async (req, res, next) => {
 
     try {
         // Busca o usuário para garantir que ele existe antes de tentar atualizar
-        const userExists = await db.query('SELECT id FROM usuarios WHERE id = $1 AND ativo = true', [id]);
+        const userExists = await db.query('SELECT id FROM usuarios WHERE id = $1 AND ativo = 1', [id]);
         if (userExists.rowCount === 0) {
             return res.status(404).json({ error: 'Usuário não encontrado ou inativo.' });
         }
@@ -111,7 +111,7 @@ export const softDeleteUser = async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await db.query(
-            'UPDATE usuarios SET ativo = false, data_atualizacao = NOW() WHERE id = $1 AND ativo = true RETURNING id',
+            'UPDATE usuarios SET ativo = false, data_atualizacao = NOW() WHERE id = $1 AND ativo = 1 RETURNING id',
             [id]
         );
         if (result.rowCount === 0) {
