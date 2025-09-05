@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Teste da API</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f0f2f5; color: #1c1e21; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; }
+        h1, h2 { color: #1877f2; }
+        h1 { text-align: center; }
+        #login-section, .resource-section { background-color: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input[type="text"], input[type="password"], input[type="number"] { width: calc(100% - 18px); padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #dddfe2; }
+        button { font-size: 14px; font-weight: bold; padding: 10px 15px; border: none; background-color: #1877f2; color: white; border-radius: 6px; cursor: pointer; margin-right: 5px; margin-top: 5px; }
+        button:hover { background-color: #166fe5; }
+        .btn-get { background-color: #42b72a; }
+        .btn-get:hover { background-color: #36a420; }
+        .btn-update { background-color: #f0ad4e; }
+        .btn-update:hover { background-color: #ec9b2e; }
+        .btn-delete { background-color: #dc3545; }
+        .btn-delete:hover { background-color: #c82333; }
+        #logoutButton { background-color: #6c757d; }
+        #logoutButton:hover { background-color: #5a6268; }
+        pre { background-color: #f0f2f5; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #dddfe2; }
+        form { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #606770; }
+        .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .id-form input { flex-grow: 1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-section">
+        <h1>Login no Dashboard da API</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuário:</label>
+                <input type="text" id="username" name="username" value="admin" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha" value="senha123" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="dashboard-section" style="display: none;">
+        <h1>Dashboard de Teste da API</h1>
+        <p>Logado como: <b id="loggedInUser"></b> <button id="logoutButton">Logout</button></p>
+        <hr>
+
+        <div id="crud-container"></div>
+
+        <hr>
+        <h3>Payload da Requisição:</h3>
+        <pre id="request-payload">Nenhuma requisição enviada.</pre>
+
+        <hr>
+        <h3>Resposta do Servidor:</h3>
+        <pre id="response">Aguardando uma operação...</pre>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:3000';
+    let apiToken = null;
+
+    const loginSection = document.getElementById('login-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const loginForm = document.getElementById('loginForm');
+    const logoutButton = document.getElementById('logoutButton');
+    const responseEl = document.getElementById('response');
+    const crudContainer = document.getElementById('crud-container');
+    const loggedInUserEl = document.getElementById('loggedInUser');
+    const requestPayloadEl = document.getElementById('request-payload');
+
+    function displayResponse(data) {
+        responseEl.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function displayRequest(method, endpoint, body) {
+        const payload = {
+            method,
+            endpoint: `${API_BASE_URL}${endpoint}`,
+            body: body || 'N/A'
+        };
+        requestPayloadEl.textContent = JSON.stringify(payload, null, 2);
+        // Limpa a resposta anterior para evitar confusão
+        responseEl.textContent = 'Aguardando resposta do servidor...';
+    }
+
+    function generateCrudHtml(resource, resourceKey) {
+        const { name, path, fields, isReadOnly, isCreateOnly } = resource;
+        const id = resourceKey; // Usar a chave do objeto como ID único
+
+        const createFormFields = fields.map(f => `
+            <div class="form-group">
+                <label for="create-${id}-${f.name}">${f.label}:</label>
+                <input type="${f.type || 'text'}" id="create-${id}-${f.name}" name="${f.name}" placeholder="${f.placeholder || ''}" ${f.required ? 'required' : ''}>
+            </div>
+        `).join('');
+
+        return `
+            <div class="resource-section">
+                <h2>${name} (<code>${path}</code>)</h2>
+                
+                ${!isCreateOnly ? `<button class="btn-get" data-resource="${id}" data-action="getAll">Listar Todos</button>` : ''}
+                
+                ${!isCreateOnly ? `
+                <form class="id-form" data-resource="${id}" data-action="getById">
+                    <input type="text" placeholder="ID para buscar, atualizar ou deletar" required>
+                    <button type="submit" class="btn-get">Buscar por ID</button>
+                    ${!isReadOnly ? `
+                    <button type="button" class="btn-update" data-resource="${id}" data-action="update">Atualizar</button>
+                    <button type="button" class="btn-delete" data-resource="${id}" data-action="delete">Deletar</button>
+                    ` : ''}
+                </form>
+                ` : ''}
+
+                ${!isReadOnly ? `
+                <form data-resource="${id}" data-action="create">
+                    <h3>Criar Novo(a) ${name}</h3>
+                    ${createFormFields}
+                    <button type="submit">Criar</button>
+                </form>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiToken) {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+
+        const config = { method, headers };
+        if (body) {
+            config.body = JSON.stringify(body);
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+            if (response.status === 204) {
+                return { status: 204, message: 'Operação bem-sucedida (No Content).' };
+            }
+            const data = await response.json();
+            if (!response.ok) throw data;
+            return data;
+        } catch (error) {
+            console.error('Erro na chamada da API:', error);
+            return { error: error.message || error.error || 'Ocorreu um erro desconhecido.' };
+        }
+    }
+
+    const resources = {
+        cidades: { name: 'Cidades', path: '/cidades', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'estado', label: 'Estado (UF)', required: true, placeholder: 'Ex: BA' }] },
+        escolas: { name: 'Escolas', path: '/escolas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'id_cidade', label: 'ID da Cidade', required: true, placeholder: 'UUID da cidade' }] },
+        salas: { name: 'Salas', path: '/salas', fields: [{ name: 'nome', label: 'Nome', required: true, placeholder: 'Ex: 6ºA' }, { name: 'id_escola', label: 'ID da Escola', required: true, placeholder: 'UUID da escola' }] },
+        jogos: { name: 'Jogos', path: '/jogos', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' }, { name: 'url_jogo', label: 'URL do Jogo' }, { name: 'url_thumbnail', label: 'URL da Thumbnail' }] },
+        conquistas: { name: 'Conquistas', path: '/conquistas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' }, { name: 'icone_url', label: 'URL do Ícone' }] },
+        usuarios: { name: 'Usuários', path: '/usuarios', fields: [
+            { name: 'nome', label: 'Nome Completo', required: true }, { name: 'username', label: 'Username', required: true },
+            { name: 'senha', label: 'Senha', type: 'password', required: true }, { name: 'id_papel', label: 'ID do Papel', required: true, placeholder: 'UUID do papel' },
+            { name: 'id_escola', label: 'ID da Escola', required: true, placeholder: 'UUID da escola' }, { name: 'id_sala', label: 'ID da Sala (opcional)', placeholder: 'UUID da sala' },
+            { name: 'matricula', label: 'Matrícula (opcional)' }, { name: 'ano', label: 'Ano (opcional)' },
+        ]},
+        pontuacoes: { name: 'Pontuações', path: '/pontuacoes', fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_jogo', label: 'ID do Jogo', required: true, placeholder: 'UUID do jogo' }, { name: 'pontuacao', label: 'Pontuação', type: 'number', required: true }] },
+        'usuarios-conquistas': { name: 'Atribuir Conquista', path: '/usuarios-conquistas', isCreateOnly: true, fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_conquista', label: 'ID da Conquista', required: true }] }
+    };
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        displayResponse({ message: 'Autenticando...' });
+        const data = await apiCall('/auth/login', 'POST', { username: e.target.username.value, senha: e.target.senha.value });
+        displayResponse(data);
+        if (data && data.token) {
+            apiToken = data.token;
+            loginSection.style.display = 'none';
+            dashboardSection.style.display = 'block';
+            loggedInUserEl.textContent = data.user.username;
+        }
+    });
+
+    logoutButton.addEventListener('click', () => {
+        apiToken = null;
+        loginSection.style.display = 'block';
+        dashboardSection.style.display = 'none';
+        responseEl.textContent = 'Você foi deslogado.';
+    });
+
+    crudContainer.addEventListener('click', async (e) => {
+        try {
+            const button = e.target;
+            if (button.tagName !== 'BUTTON') return;
+
+            const action = button.dataset.action;
+            if (!action) return;
+
+            // Apenas previne o padrão para botões que gerenciamos aqui (com data-action)
+            e.preventDefault();
+
+            const resourceId = button.dataset.resource;
+            const resource = resources[resourceId];
+            
+            if (action === 'getAll') {
+                displayRequest('GET', resource.path, null);
+                const result = await apiCall(resource.path, 'GET');
+                displayResponse(result);
+                return;
+            }
+
+            // Ações que precisam de um ID
+            const form = button.closest('form');
+            if (!form) return;
+
+            const idInput = form.querySelector('input[type="text"]');
+            const id = idInput ? idInput.value : null;
+
+            if (!id && ['update', 'delete'].includes(action)) {
+                alert('Por favor, insira um ID no campo de busca.');
+                return;
+            }
+
+            if (action === 'update') {
+                const updateJson = prompt(`Insira o JSON para atualizar o(a) ${resource.name} com ID: ${id}\n\nExemplo: {"nome": "Novo Nome"}`);
+                if (!updateJson) return;
+                try {
+                    const body = JSON.parse(updateJson);
+                    const method = resourceId === 'usuarios' ? 'PATCH' : 'PUT';
+                    displayRequest(method, `${resource.path}/${id}`, body);
+                    const result = await apiCall(`${resource.path}/${id}`, method, body);
+                    displayResponse(result);
+                } catch (err) {
+                    alert('JSON inválido!');
+                    displayResponse({ error: 'JSON inválido fornecido.', details: err.message });
+                }
+            }
+
+            if (action === 'delete') {
+                if (!confirm(`Tem certeza que deseja deletar o(a) ${resource.name} com ID: ${id}?`)) return;
+                displayRequest('DELETE', `${resource.path}/${id}`, null);
+                const result = await apiCall(`${resource.path}/${id}`, 'DELETE');
+                displayResponse(result);
+            }
+        } catch (err) {
+            console.error("Erro no manipulador de clique:", err);
+            displayResponse({ error: 'Erro no script do dashboard (click handler)!', message: err.message });
+        }
+    });
+
+    crudContainer.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const form = e.target;
+            const action = form.dataset.action;
+            const resourceId = form.dataset.resource;
+            const resource = resources[resourceId];
+
+            if (action === 'getById') {
+                const id = form.querySelector('input').value;
+                if (!id) return;
+                displayRequest('GET', `${resource.path}/${id}`, null);
+                const result = await apiCall(`${resource.path}/${id}`, 'GET');
+                displayResponse(result);
+            }
+            
+            if (action === 'create') {
+                const body = {};
+                resource.fields.forEach(field => {
+                    const input = form.elements[field.name];
+                    if (input && input.value) {
+                       body[field.name] = input.type === 'number' ? Number(input.value) : input.value;
+                    }
+                });
+                displayRequest('POST', resource.path, body);
+                const result = await apiCall(resource.path, 'POST', body);
+                displayResponse(result);
+                if (!result.error) form.reset();
+            }
+        } catch (err) {
+            console.error("Erro no manipulador de submit:", err);
+            displayResponse({ error: 'Erro no script do dashboard (submit handler)!', message: err.message });
+        }
+    });
+
+    function initializeDashboard() {
+        let html = '';
+        for (const key in resources) {
+            html += generateCrudHtml(resources[key], key);
+        }
+        crudContainer.innerHTML = html;
+    }
+
+    initializeDashboard();
+</script>
+
+</body>
+</html>

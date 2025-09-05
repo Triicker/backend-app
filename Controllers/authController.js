@@ -14,7 +14,8 @@ export const loginUser = async (req, res, next) => {
         const user = rows[0];
 
         // Mensagem de erro genérica para não revelar se um usuário existe ou não
-        if (!user || !user.ativo) {
+        // Verifica se o usuário existe e se a sua atividade é 1 (ativo)
+        if (!user || user.atividade !== 1) {
             return res.status(401).json({ error: 'Credenciais inválidas.' });
         }
 

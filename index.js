@@ -2,10 +2,15 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import db from './db/index.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { verifyJWT } from './authMiddleware.js'; // Importa o middleware
 import usuariosRouter from './usuarios.js'; // Importa o roteador de usuários
+import authRouter from './routes/authRoutes.js'; // Importa o roteador de autenticação
+import pontuacoesRouter from './pontuacoes.js'; // Importa o roteador de pontuações
+import cidadeRouter from './routes/cidadeRoutes.js'; // Importa o roteador de cidades
+import escolaRouter from './routes/escolaRoutes.js'; // Importa o roteador de escolas
+import salaRouter from './routes/salaRoutes.js'; // Importa o roteador de salas
+import usuarioConquistaRouter from './routes/usuarioConquistaRoutes.js'; // Importa o roteador de usuarios_conquistas
+import conquistaRouter from './routes/conquistaRoutes.js'; // Importa o roteador de conquistas
+import jogoRouter from './routes/jogoRoutes.js'; // Importa o roteador de jogos
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,39 +28,42 @@ app.get('/', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'API está no ar!' });
 });
 
-// Rota de Login
-app.post('/auth/login', async (req, res) => {
-    const { username, senha } = req.body;
-
-    if (!username || !senha) {
-        return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
-    }
-
-    try {
-        const userQuery = 'SELECT * FROM usuarios WHERE username = $1 AND ativo = 1';
-        const result = await db.query(userQuery, [username]);
-        const user = result.rows[0];
-
-        if (!user || !(await bcrypt.compare(senha, user.senha))) {
-            return res.status(401).json({ error: 'Credenciais inválidas.' });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, username: user.username, id_papel: user.id_papel },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        delete user.senha;
-        res.status(200).json({ user, token });
-    } catch (error) {
-        console.error('Erro no processo de login:', error);
-        res.status(500).json({ error: 'Erro interno do servidor.' });
-    }
-});
+// Rotas de Autenticação
+app.use('/auth', authRouter);
 
 // Usa o roteador de usuários para todas as rotas que começam com /usuarios
 app.use('/usuarios', usuariosRouter);
+
+// Usa o roteador de pontuações
+app.use('/pontuacoes', pontuacoesRouter);
+
+// Usa o roteador de cidades
+app.use('/cidades', cidadeRouter);
+
+// Usa o roteador de escolas
+app.use('/escolas', escolaRouter);
+
+// Usa o roteador de salas
+app.use('/salas', salaRouter);
+
+// Usa o roteador de usuarios_conquistas
+app.use('/usuarios-conquistas', usuarioConquistaRouter);
+
+// Usa o roteador de conquistas
+app.use('/conquistas', conquistaRouter);
+
+// Usa o roteador de jogos
+app.use('/jogos', jogoRouter);
+
+// ==================================================
+// --- Tratamento de Erros ---
+// ==================================================
+// Middleware de tratamento de erros. Deve ser o último middleware a ser adicionado.
+app.use((err, req, res, next) => {
+    console.error(err.stack); // Loga o stack trace do erro no console do servidor
+    // Envia uma resposta de erro padronizada em JSON
+    res.status(500).json({ error: 'Ocorreu um erro interno no servidor.', message: err.message });
+});
 
 // --- Inicia o servidor ---
 app.listen(port, () => {
