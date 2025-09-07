@@ -1,5 +1,4 @@
 import db from '../db/index.js';
-import bcrypt from 'bcrypt';
 
 // Colunas a serem retornadas para evitar expor a senha
 const publicUserColumns = 'id, nome, username, id_papel, escola, matricula, ano, estado, cidade, data_criacao, data_atualizacao, ativo';
@@ -12,13 +11,13 @@ export const createUser = async (req, res, next) => {
     }
 
     try {
-        const hashedPassword = await bcrypt.hash(senha, 10);
+        // AVISO: A senha está sendo salva como texto plano.
         const newUserQuery = `
             INSERT INTO usuarios (nome, username, senha, id_papel, escola, matricula, ano, estado, cidade)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING ${publicUserColumns};
         `;
-        const values = [nome, username, hashedPassword, id_papel, escola, matricula, ano, estado, cidade];
+        const values = [nome, username, senha, id_papel, escola, matricula, ano, estado, cidade];
         const result = await db.query(newUserQuery, values);
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -71,12 +70,13 @@ export const updateUser = async (req, res, next) => {
             return res.status(404).json({ error: 'Usuário não encontrado ou inativo.' });
         }
 
-        let hashedPassword;
+        // AVISO: A senha está sendo salva como texto plano.
+        let newPassword = senha;
         if (senha) {
-            hashedPassword = await bcrypt.hash(senha, 10);
+            // A senha será atualizada com o valor literal fornecido.
         }
 
-        const fields = { nome, username, senha: hashedPassword, id_papel, escola, matricula, ano, estado, cidade };
+        const fields = { nome, username, senha: newPassword, id_papel, escola, matricula, ano, estado, cidade };
         const queryParts = [];
         const values = [];
         let paramIndex = 1;
@@ -122,4 +122,3 @@ export const softDeleteUser = async (req, res, next) => {
         next(error);
     }
 };
-

@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import db from './db/index.js'; // Caminho corrigido e nome da variável corrigido
-import bcrypt from 'bcrypt';
 import { verifyJWT } from './authMiddleware.js';
 
 const router = Router();
@@ -11,12 +10,11 @@ router.use(verifyJWT);
 // CREATE - Criar um novo usuário
 router.post('/', async (req, res) => {
     const { nome, username, senha, id_papel, escola, matricula, ano, estado, cidade, ativo = 1 } = req.body;
-    const saltRounds = 10;
     try {
-        const hashedPassword = await bcrypt.hash(senha, saltRounds);
-        const newUser = await db.query( // Corrigido para db.query
+        // AVISO: A senha está sendo salva como texto plano.
+        const newUser = await db.query(
             'INSERT INTO usuarios (nome, username, senha, id_papel, escola, matricula, ano, estado, cidade, ativo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, nome, username, ativo, data_criacao',
-            [nome, username, hashedPassword, id_papel, escola, matricula, ano, estado, cidade, ativo]
+            [nome, username, senha, id_papel, escola, matricula, ano, estado, cidade, ativo]
         );
         res.status(201).json(newUser.rows[0]);
     } catch (err) {

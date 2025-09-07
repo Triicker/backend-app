@@ -1,5 +1,4 @@
 import db from '../db/index.js';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 export const loginUser = async (req, res, next) => {
@@ -19,9 +18,9 @@ export const loginUser = async (req, res, next) => {
         }
 
         // Compara a senha enviada com o hash salvo no banco
-        const passwordMatches = await bcrypt.compare(senha, user.senha);
+        const passwordMatches = senha === user.senha; // AVISO: Comparação de senha em texto plano.
 
-        if (!passwordMatches) {
+        if (!passwordMatches) { 
             return res.status(401).json({ error: 'Credenciais inválidas.' });
         }
 

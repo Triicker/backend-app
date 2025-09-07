@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import db from './db/index.js';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { verifyJWT } from './authMiddleware.js'; // Importa o middleware
 import usuariosRouter from './usuarios.js'; // Importa o roteador de usuários
@@ -36,8 +35,8 @@ app.post('/auth/login', async (req, res) => {
         const result = await db.query(userQuery, [username]);
         const user = result.rows[0];
 
-        if (!user || !(await bcrypt.compare(senha, user.senha))) {
-            return res.status(401).json({ error: 'Credenciais inválidas.' });
+        if (!user || senha !== user.senha) {
+            return res.status(401).json({ error: 'Credenciais inválidas.' }); // AVISO: Comparação de senha em texto plano.
         }
 
         const token = jwt.sign(
