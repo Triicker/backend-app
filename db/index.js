@@ -7,12 +7,11 @@ const poolConfig = {
   connectionString: process.env.DATABASE_URL,
 };
 
-// Em produção (como no Render), adiciona a configuração SSL.
-// A URL de conexão interna do Render não exige SSL, mas a externa sim.
-// Esta configuração é segura para a maioria dos provedores de nuvem.
-if (process.env.NODE_ENV === 'production') {
+// Se a DATABASE_URL estiver definida (apontando para um banco remoto como o do Render),
+// é necessário habilitar o SSL para conexões externas.
+if (poolConfig.connectionString) {
   poolConfig.ssl = {
-    rejectUnauthorized: false
+    rejectUnauthorized: false // Necessário para bancos de dados do Render/Heroku
   };
 }
 
