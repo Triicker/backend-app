@@ -8,8 +8,8 @@ import {
     updateUser,
     softDeleteUser,
     reactivateUser
-} from '../Controllers/userController.js';
-import { getConquistasByUsuario } from '../Controllers/usuarioConquistaController.js';
+} from '../controllers/userController.js';
+import { getConquistasByUsuario } from '../controllers/usuarioConquistaController.js';
 
 const router = Router();
 

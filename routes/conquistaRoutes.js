@@ -5,7 +5,7 @@ import {
     getConquistaById,
     updateConquista,
     deleteConquista
-} from '../Controllers/conquistaController.js';
+} from '../controllers/conquistaController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();

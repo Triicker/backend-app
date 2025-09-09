@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createCidade, getAllCidades, getCidadeById, updateCidade, deleteCidade } from '../Controllers/cidadeController.js';
+import { createCidade, getAllCidades, getCidadeById, updateCidade, deleteCidade } from '../controllers/cidadeController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
