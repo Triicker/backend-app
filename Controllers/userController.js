@@ -38,6 +38,16 @@ export const getAllUsers = async (req, res, next) => {
     }
 };
 
+export const getInactiveUsers = async (req, res, next) => {
+    try {
+        // Busca usuários com atividade = 0 e ordena pelos mais recentemente desativados
+        const result = await db.query(`SELECT ${publicUserColumns} FROM usuarios WHERE atividade = 0 ORDER BY data_atualizacao DESC`);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getUserById = async (req, res, next) => {
     const { id } = req.params;
     try {

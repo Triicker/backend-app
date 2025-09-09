@@ -3,6 +3,7 @@ import { verifyJWT } from '../authMiddleware.js';
 import {
     createUser,
     getAllUsers,
+    getInactiveUsers,
     getUserById,
     getUsersByRole,
     updateUser,
@@ -22,6 +23,8 @@ router.use(verifyJWT);
 
 // READ - Obter todos os usuários
 router.get('/', getAllUsers);
+router.get('/inativos', getInactiveUsers); 
+router.get('/:id', getUserById);
 
 // READ - Rotas específicas por papel
 router.get('/alunos', getUsersByRole('900dd0cb-92c3-4cb6-8cf1-89bf38ade4a5'));
@@ -31,6 +34,7 @@ router.get('/admins', getUsersByRole('60577680-47a5-438a-839c-3b884537ea48'));
 
 // READ - Obter um usuário pelo ID
 router.get('/:id', getUserById);
+
 
 // READ - Obter as conquistas de um usuário pelo ID do usuário
 router.get('/:id/conquistas', getConquistasByUsuario);
