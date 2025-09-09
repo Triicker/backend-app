@@ -2,15 +2,16 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import db from './db/index.js';
-import usuariosRouter from './usuarios.js'; // Importa o roteador de usuários
+import usuariosRouter from './routes/usuariosRoutes.js'; // Importa o roteador de usuários
 import authRouter from './routes/authRoutes.js'; // Importa o roteador de autenticação
-import pontuacoesRouter from './pontuacoes.js'; // Importa o roteador de pontuações
+import pontuacoesRouter from './routes/pontuacoesRoutes.js'; // Importa o roteador de pontuações
 import cidadeRouter from './routes/cidadeRoutes.js'; // Importa o roteador de cidades
 import escolaRouter from './routes/escolaRoutes.js'; // Importa o roteador de escolas
 import salaRouter from './routes/salaRoutes.js'; // Importa o roteador de salas
 import usuarioConquistaRouter from './routes/usuarioConquistaRoutes.js'; // Importa o roteador de usuarios_conquistas
 import conquistaRouter from './routes/conquistaRoutes.js'; // Importa o roteador de conquistas
 import jogoRouter from './routes/jogoRoutes.js'; // Importa o roteador de jogos
+import papeisRouter from './routes/papeisRoutes.js'; // Importa o roteador de papéis
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -54,6 +55,9 @@ app.use('/conquistas', conquistaRouter);
 
 // Usa o roteador de jogos
 app.use('/jogos', jogoRouter);
+
+// Usa o roteador de papéis
+app.use('/papeis', papeisRouter);
 
 // ==================================================
 // --- Tratamento de Erros ---
