@@ -26,7 +26,7 @@ export const assignConquista = async (req, res, next) => {
 
 // GET CONQUISTAS BY USUARIO
 export const getConquistasByUsuario = async (req, res, next) => {
-    const { id_usuario } = req.params;
+    const { id } = req.params;
     try {
         const query = `
             SELECT c.id, c.nome, c.descricao, c.icone_url, uc.data_obtencao
@@ -35,7 +35,7 @@ export const getConquistasByUsuario = async (req, res, next) => {
             WHERE uc.id_usuario = $1
             ORDER BY uc.data_obtencao DESC;
         `;
-        const { rows } = await db.query(query, [id_usuario]);
+        const { rows } = await db.query(query, [id]);
         res.status(200).json(rows);
     } catch (error) {
         next(error);

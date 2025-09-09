@@ -9,6 +9,7 @@ import {
     softDeleteUser,
     reactivateUser
 } from './Controllers/userController.js';
+import { getConquistasByUsuario } from './Controllers/usuarioConquistaController.js';
 
 const router = Router();
 
@@ -32,6 +33,9 @@ router.get('/admins', getUsersByRole('60577680-47a5-438a-839c-3b884537ea48')); /
 
 // READ - Obter um usuário pelo ID
 router.get('/:id', getUserById);
+
+// READ - Obter as conquistas de um usuário pelo ID do usuário
+router.get('/:id/conquistas', getConquistasByUsuario);
 
 // UPDATE - Atualizar um usuário (parcialmente com PATCH)
 router.patch('/:id', updateUser);
