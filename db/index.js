@@ -3,14 +3,20 @@ import 'dotenv/config';
 
 // A documentação do 'pg' (node-postgres) recomenda usar Pool
 // para gerenciar conexões com o banco de dados.
-const pool = new pg.Pool({
+const poolConfig = {
   connectionString: process.env.DATABASE_URL,
-  // Adicionado para conexões com serviços como Render, Heroku, etc.
-  // que exigem SSL.
-  ssl: {
+};
+
+// Em produção (como no Render), adiciona a configuração SSL.
+// A URL de conexão interna do Render não exige SSL, mas a externa sim.
+// Esta configuração é segura para a maioria dos provedores de nuvem.
+if (process.env.NODE_ENV === 'production') {
+  poolConfig.ssl = {
     rejectUnauthorized: false
-  }
-});
+  };
+}
+
+const pool = new pg.Pool(poolConfig);
 
 // Função para testar a conexão com o banco de dados
 const testConnection = async () => {
