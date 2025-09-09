@@ -27,4 +27,5 @@ app.use((err, req, res, next) => {
 // --- Inicia o servidor ---
 app.listen(port, () => {
     console.log(`Servidor rodando na porta ${port}`);
+    db.testConnection(); // Testa a conexão com o banco após o servidor iniciar
 });

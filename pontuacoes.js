@@ -11,7 +11,7 @@ import {
     updatePontuacao,
     getUsuarioRankByJogo,
     deletePontuacao
-} from './Controllers/pontuacaoController.js';
+} from '../controllers/pontuacaoController.js';
 import { verifyJWT } from './authMiddleware.js';
 
 const router = Router();
