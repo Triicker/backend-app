@@ -74,11 +74,15 @@ export const getRankingByJogo = async (req, res, next) => {
                 u.id as id_usuario,
                 u.nome as nome_usuario,
                 u.username,
+                e.nome as nome_escola,
+                s.nome as nome_sala,
                 MAX(p.pontuacao) as pontuacao_maxima
             FROM pontuacoes p
             JOIN usuarios u ON p.id_usuario = u.id
+            LEFT JOIN escolas e ON u.id_escola = e.id
+            LEFT JOIN salas s ON u.id_sala = s.id
             WHERE p.id_jogo = $1
-            GROUP BY u.id
+            GROUP BY u.id, e.nome, s.nome
             ORDER BY pontuacao_maxima DESC
             LIMIT $2;
         `;
@@ -101,11 +105,15 @@ export const getRankingByEscola = async (req, res, next) => {
                 u.id as id_usuario,
                 u.nome as nome_usuario,
                 u.username,
+                e.nome as nome_escola,
+                s.nome as nome_sala,
                 MAX(p.pontuacao) as pontuacao_maxima
             FROM pontuacoes p
             JOIN usuarios u ON p.id_usuario = u.id
+            LEFT JOIN escolas e ON u.id_escola = e.id
+            LEFT JOIN salas s ON u.id_sala = s.id
             WHERE u.id_escola = $1 AND p.id_jogo = $2
-            GROUP BY u.id
+            GROUP BY u.id, e.nome, s.nome
             ORDER BY pontuacao_maxima DESC
             LIMIT $3;
         `;
@@ -129,12 +137,14 @@ export const getRankingByCidade = async (req, res, next) => {
                 u.nome as nome_usuario,
                 u.username,
                 e.nome as nome_escola,
+                s.nome as nome_sala,
                 MAX(p.pontuacao) as pontuacao_maxima
             FROM pontuacoes p
             JOIN usuarios u ON p.id_usuario = u.id
             JOIN escolas e ON u.id_escola = e.id
+            LEFT JOIN salas s ON u.id_sala = s.id
             WHERE e.id_cidade = $1 AND p.id_jogo = $2
-            GROUP BY u.id, e.nome
+            GROUP BY u.id, e.nome, s.nome
             ORDER BY pontuacao_maxima DESC
             LIMIT $3;
         `;
@@ -167,13 +177,15 @@ export const getRankingByEstado = async (req, res, next) => {
                 u.username,
                 e.nome as nome_escola,
                 c.nome as nome_cidade,
+                s.nome as nome_sala,
                 MAX(p.pontuacao) as pontuacao_maxima
             FROM pontuacoes p
             JOIN usuarios u ON p.id_usuario = u.id
             JOIN escolas e ON u.id_escola = e.id
             JOIN cidades c ON e.id_cidade = c.id
+            LEFT JOIN salas s ON u.id_sala = s.id
             WHERE c.estado = $1 AND p.id_jogo = $2
-            GROUP BY u.id, e.nome, c.nome
+            GROUP BY u.id, e.nome, c.nome, s.nome
             ORDER BY pontuacao_maxima DESC
             LIMIT $3;
         `;
