@@ -21,25 +21,26 @@ router.post('/', createUser);
 // Aplica o middleware de autenticação para TODAS as rotas ABAIXO desta linha.
 router.use(verifyJWT);
 
-// READ - Obter todos os usuários
+// --- ROTAS DE LEITURA (READ) ---
+// Obter todos os usuários ativos
 router.get('/', getAllUsers);
+// Obter todos os usuários inativos
 router.get('/inativos', getInactiveUsers); 
-router.get('/:id', getUserById);
 
-// READ - Rotas específicas por papel
+// Rotas específicas por papel (devem vir antes de /:id para evitar conflitos)
 router.get('/alunos', getUsersByRole('900dd0cb-92c3-4cb6-8cf1-89bf38ade4a5'));
 router.get('/professores', getUsersByRole('321f226b-f201-42a9-a0e5-6ef7c4990360'));
 router.get('/gestores', getUsersByRole('21787f01-b067-4249-80f5-9732bccf61c3'));
 router.get('/admins', getUsersByRole('60577680-47a5-438a-839c-3b884537ea48'));
 
-// READ - Obter um usuário pelo ID
-router.get('/:id', getUserById);
-
-
-// READ - Obter as conquistas de um usuário pelo ID do usuário
+// Obter as conquistas de um usuário (deve vir antes de /:id)
 router.get('/:id/conquistas', getConquistasByUsuario);
 
-// UPDATE - Atualizar um usuário (parcialmente com PATCH)
+// Obter um usuário pelo ID (rota mais genérica, fica por último entre os GETs)
+router.get('/:id', getUserById);
+
+// --- ROTAS DE ESCRITA (WRITE) ---
+// Atualizar um usuário (parcialmente com PATCH)
 router.patch('/:id', updateUser);
 
 // DELETE - Desativar um usuário (Soft delete)
