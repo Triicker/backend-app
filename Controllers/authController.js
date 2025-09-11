@@ -30,7 +30,9 @@ export const loginUser = async (req, res, next) => {
         const payload = {
             id: user.id,
             username: user.username,
-            role: user.id_papel
+            id_papel: user.id_papel, // Mantendo consistência com o banco
+            id_escola: user.id_escola,
+            id_sala: user.id_sala
         };
 
         // Assina o token com o segredo do .env

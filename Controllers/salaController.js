@@ -24,6 +24,29 @@ export const createSala = async (req, res, next) => {
     }
 };
 
+/**
+ * @description Lista as salas da escola do professor/gestor logado.
+ * Essencial para a UI onde o professor escolhe para qual turma atribuir um jogo.
+ */
+export const getSalasMinhaEscola = async (req, res, next) => {
+    const { id_escola } = req.user; // Obtido do token JWT
+
+    if (!id_escola) {
+        // Se o usuário não pertence a uma escola (ex: admin global), retorna lista vazia.
+        return res.status(200).json([]);
+    }
+
+    try {
+        const { rows } = await db.query(
+            'SELECT id, nome FROM salas WHERE id_escola = $1 ORDER BY nome ASC',
+            [id_escola]
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        next(error);
+    }
+};
+
 // READ ALL
 export const getAllSalas = async (req, res, next) => {
     try {

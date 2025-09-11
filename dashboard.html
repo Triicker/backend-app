@@ -10,7 +10,7 @@
         h1, h2 { color: #1877f2; }
         h1 { text-align: center; }
         #login-section, .resource-section { background-color: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input[type="text"], input[type="password"], input[type="number"] { width: calc(100% - 18px); padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #dddfe2; }
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #dddfe2; box-sizing: border-box; }
         button { font-size: 14px; font-weight: bold; padding: 10px 15px; border: none; background-color: #1877f2; color: white; border-radius: 6px; cursor: pointer; margin-right: 5px; margin-top: 5px; }
         button:hover { background-color: #166fe5; }
         .btn-get { background-color: #42b72a; }
@@ -27,6 +27,10 @@
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #606770; }
         .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .id-form input { flex-grow: 1; }
+        .checkbox-group { border: 1px solid #dddfe2; padding: 10px; border-radius: 6px; max-height: 150px; overflow-y: auto; }
+        .checkbox-group label { display: block; font-weight: normal; }
+        .checkbox-group label:hover { background-color: #f0f2f5; }
+
     </style>
 </head>
 <body>
@@ -81,11 +85,11 @@
         responseEl.textContent = JSON.stringify(data, null, 2);
     }
 
-    function displayRequest(method, endpoint, body) {
+   function displayRequest(method, endpoint, body) {
         const payload = {
             method,
             endpoint: `${API_BASE_URL}${endpoint}`,
-            body: body || 'N/A'
+            body: body || null
         };
         requestPayloadEl.textContent = JSON.stringify(payload, null, 2);
         // Limpa a resposta anterior para evitar confusão
@@ -93,20 +97,60 @@
     }
 
     function generateCrudHtml(resource, resourceKey) {
-        const { name, path, fields, isReadOnly, isCreateOnly } = resource;
+        const { name, path, fields = [], isReadOnly, isCreateOnly, filters = [] } = resource;
         const id = resourceKey; // Usar a chave do objeto como ID único
 
         const createFormFields = fields.map(f => `
+            ${(() => {
+                if (f.type === 'checkbox-group') {
+                    return `
+                        <div class="form-group">
+                            <label>${f.label}:</label>
+                            <div class="checkbox-group" data-name="${f.name}" data-source="${f.dataSource}">
+                                Carregando opções...
+                            </div>
+                        </div>
+                    `;
+                }
+                if (f.type === 'select') {
+                    return `
+                        <div class="form-group">
+                            <label for="create-${id}-${f.name}">${f.label}:</label>
+                            <select id="create-${id}-${f.name}" name="${f.name}" data-source="${f.dataSource}" ${f.required ? 'required' : ''}>
+                                <option value="">Carregando...</option>
+                            </select>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="form-group">
+                        <label for="create-${id}-${f.name}">${f.label}:</label>
+                        <input type="${f.type || 'text'}" id="create-${id}-${f.name}" name="${f.name}" placeholder="${f.placeholder || ''}" ${f.required ? 'required' : ''}>
+                    </div>
+                `;
+            })()}
+        `).join('');
+
+        const filterFormFields = filters.map(f => `
             <div class="form-group">
-                <label for="create-${id}-${f.name}">${f.label}:</label>
-                <input type="${f.type || 'text'}" id="create-${id}-${f.name}" name="${f.name}" placeholder="${f.placeholder || ''}" ${f.required ? 'required' : ''}>
+                <label for="filter-${id}-${f.name}">${f.label}:</label>
+                <select id="filter-${id}-${f.name}" name="${f.name}" data-source="${f.dataSource}">
+                    <option value="">-- Todos --</option>
+                </select>
             </div>
         `).join('');
+
+        const filterForm = filters.length > 0 ? `
+            <form data-resource="${id}" data-action="filter">
+                <h3>Filtrar ${name}</h3>
+                ${filterFormFields}
+                <button type="submit">Filtrar</button>
+            </form>
+        ` : '';
 
         return `
             <div class="resource-section">
                 <h2>${name} (<code>${path}</code>)</h2>
-                
                 ${!isCreateOnly ? `<button class="btn-get" data-resource="${id}" data-action="getAll">Listar Todos</button>` : ''}
                 
                 ${!isCreateOnly ? `
@@ -127,6 +171,8 @@
                     <button type="submit">Criar</button>
                 </form>
                 ` : ''}
+
+                ${filterForm}
             </div>
         `;
     }
@@ -160,13 +206,29 @@
         cidades: { name: 'Cidades', path: '/cidades', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'estado', label: 'Estado (UF)', required: true, placeholder: 'Ex: BA' }] },
         escolas: { name: 'Escolas', path: '/escolas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'id_cidade', label: 'ID da Cidade', required: true, placeholder: 'UUID da cidade' }] },
         salas: { name: 'Salas', path: '/salas', fields: [{ name: 'nome', label: 'Nome', required: true, placeholder: 'Ex: 6ºA' }, { name: 'id_escola', label: 'ID da Escola', required: true, placeholder: 'UUID da escola' }] },
-        jogos: { name: 'Jogos', path: '/jogos', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' }, { name: 'url_jogo', label: 'URL do Jogo' }, { name: 'url_thumbnail', label: 'URL da Thumbnail' }] },
+        jogos: { name: 'Jogos', path: '/jogos', fields: [
+            { name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' },
+            { name: 'url_jogo', label: 'URL do Jogo' }, { name: 'url_thumbnail', label: 'URL da Thumbnail' },
+            { name: 'disciplinaIds', label: 'Disciplinas', type: 'checkbox-group', dataSource: '/disciplinas' },
+            { name: 'anoIds', label: 'Anos', type: 'checkbox-group', dataSource: '/anos' }
+        ], filters: [
+            { name: 'disciplinaId', label: 'Filtrar por Disciplina', type: 'select', dataSource: '/disciplinas' },
+            { name: 'anoId', label: 'Filtrar por Ano', type: 'select', dataSource: '/anos' }
+        ]},
+        disciplinas: { name: 'Disciplinas', path: '/disciplinas', fields: [{ name: 'nome', label: 'Nome', required: true }] },
+        anos: { name: 'Anos', path: '/anos', fields: [{ name: 'nome', label: 'Nome', required: true }] },
         conquistas: { name: 'Conquistas', path: '/conquistas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' }, { name: 'icone_url', label: 'URL do Ícone' }] },
         usuarios: { name: 'Usuários', path: '/usuarios', fields: [
             { name: 'nome', label: 'Nome Completo', required: true }, { name: 'username', label: 'Username', required: true },
-            { name: 'senha', label: 'Senha', type: 'password', required: true }, { name: 'id_papel', label: 'ID do Papel', required: true, placeholder: 'UUID do papel' },
-            { name: 'id_escola', label: 'ID da Escola', required: true, placeholder: 'UUID da escola' }, { name: 'id_sala', label: 'ID da Sala (opcional)', placeholder: 'UUID da sala' },
+            { name: 'senha', label: 'Senha', type: 'password', required: true }, { name: 'id_papel', label: 'ID do Papel', required: true, placeholder: 'UUID do papel' }, // TODO: Mudar para select
+            { name: 'id_escola', label: 'Escola', type: 'select', dataSource: '/escolas', required: true }, 
+            { name: 'id_sala', label: 'Sala (opcional)', type: 'select', dataSource: '/salas' },
             { name: 'matricula', label: 'Matrícula (opcional)' }, { name: 'ano', label: 'Ano (opcional)' },
+        ]},
+        atividades: { name: 'Atividades (atribuir jogo)', path: '/atividades', isReadOnly: true, fields: [
+            { name: 'id_jogo', label: 'Jogo', type: 'select', dataSource: '/jogos', required: true },
+            { name: 'id_sala', label: 'Sala', type: 'select', dataSource: '/salas/minha-escola', required: true },
+            { name: 'data_fim', label: 'Data de Fim (opcional)', type: 'date' }
         ]},
         pontuacoes: { name: 'Pontuações', path: '/pontuacoes', fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_jogo', label: 'ID do Jogo', required: true, placeholder: 'UUID do jogo' }, { name: 'pontuacao', label: 'Pontuação', type: 'number', required: true }] },
         'usuarios-conquistas': { name: 'Atribuir Conquista', path: '/usuarios-conquistas', isCreateOnly: true, fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_conquista', label: 'ID da Conquista', required: true }] }
@@ -182,6 +244,7 @@
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
             loggedInUserEl.textContent = data.user.username;
+            populateAllDynamicFields(); // Popula os campos dinâmicos após o login
         }
     });
 
@@ -263,17 +326,25 @@
             if (action === 'getById') {
                 const id = form.querySelector('input').value;
                 if (!id) return;
+                // Para atividades, a busca por ID não existe, mas o delete sim.
+                // Apenas exibimos o request para o GET para fins de visualização.
                 displayRequest('GET', `${resource.path}/${id}`, null);
                 const result = await apiCall(`${resource.path}/${id}`, 'GET');
                 displayResponse(result);
             }
-            
+
             if (action === 'create') {
                 const body = {};
                 resource.fields.forEach(field => {
                     const input = form.elements[field.name];
                     if (input && input.value) {
                        body[field.name] = input.type === 'number' ? Number(input.value) : input.value;
+                    } else if (field.type === 'checkbox-group') {
+                        // Coleta valores de grupos de checkboxes
+                        const checkedBoxes = form.querySelectorAll(`input[name="${field.name}"]:checked`);
+                        if (checkedBoxes.length > 0) {
+                            body[field.name] = Array.from(checkedBoxes).map(cb => cb.value);
+                        }
                     }
                 });
                 displayRequest('POST', resource.path, body);
@@ -281,21 +352,96 @@
                 displayResponse(result);
                 if (!result.error) form.reset();
             }
+
+            if (action === 'filter') {
+                const params = new URLSearchParams();
+                resource.filters.forEach(filter => {
+                    const select = form.elements[filter.name];
+                    if (select && select.value) {
+                        params.append(filter.name, select.value);
+                    }
+                });
+                const queryString = params.toString();
+                const endpoint = queryString ? `${resource.path}?${queryString}` : resource.path;
+                displayRequest('GET', endpoint, null);
+                const result = await apiCall(endpoint, 'GET');
+                displayResponse(result);
+            }
         } catch (err) {
             console.error("Erro no manipulador de submit:", err);
             displayResponse({ error: 'Erro no script do dashboard (submit handler)!', message: err.message });
         }
     });
 
+    async function populateSelect(select) {
+        const source = select.dataset.source;
+        try {
+            const items = await apiCall(source, 'GET');
+            if (items && Array.isArray(items)) { // Mantém a primeira opção se for um filtro
+                select.innerHTML = '<option value="">-- Selecione --</option>'; // Opção padrão
+                select.innerHTML += items.map(item => `
+                    <option value="${item.id}">${item.nome}</option>
+                `).join('');
+            } else {
+                select.innerHTML = '<option value="">Falha ao carregar</option>';
+            }
+        } catch (error) {
+            console.error(`Erro ao popular select de ${source}:`, error);
+            select.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+    }
+
+
+    async function populateCheckboxGroup(container) {
+        const source = container.dataset.source;
+        const name = container.dataset.name;
+        try {
+            const items = await apiCall(source, 'GET');
+            if (items && Array.isArray(items)) {
+                container.innerHTML = items.map(item => `
+                    <label>
+                        <input type="checkbox" name="${name}" value="${item.id}">
+                        ${item.nome}
+                    </label>
+                `).join('');
+            } else {
+                container.textContent = 'Falha ao carregar opções.';
+            }
+        } catch (error) {
+            console.error(`Erro ao popular ${name}:`, error);
+            container.textContent = 'Erro ao carregar.';
+        }
+    }
+
     function initializeDashboard() {
         let html = '';
         for (const key in resources) {
             html += generateCrudHtml(resources[key], key);
+            // Adiciona um botão customizado para Atividades
+            if (key === 'atividades') {
+                html = html.replace('</form>', `
+                    </form>
+                    <button class="btn-get" onclick="listMyActivities()">Listar Minhas Atividades (Professor)</button>
+                `);
+            }
         }
         crudContainer.innerHTML = html;
     }
 
+    function populateAllDynamicFields() {
+        document.querySelectorAll('div.checkbox-group[data-source]').forEach(populateCheckboxGroup);
+        document.querySelectorAll('select[data-source]').forEach(populateSelect);
+    }
+
+    async function listMyActivities() {
+        displayRequest('GET', '/atividades/professor/me', null);
+        const result = await apiCall('/atividades/professor/me', 'GET');
+        displayResponse(result);
+    }
+
     initializeDashboard();
+
+
 </script>
 
 </body>

@@ -6,6 +6,9 @@ import escolaRouter from './escolaRoutes.js';
 import salaRouter from './salaRoutes.js';
 import usuarioConquistaRouter from './usuarioConquistaRoutes.js';
 import conquistaRouter from './conquistaRoutes.js';
+import disciplinaRouter from './disciplinaRoutes.js';
+import anoRouter from './anoRoutes.js';
+import atividadeRouter from './atividadeRoutes.js';
 import jogoRouter from './jogoRoutes.js';
 import papeisRouter from './papeisRoutes.js';
 
@@ -24,6 +27,9 @@ const configureRoutes = (app) => {
     app.use('/salas', salaRouter);
     app.use('/usuarios-conquistas', usuarioConquistaRouter);
     app.use('/conquistas', conquistaRouter);
+    app.use('/disciplinas', disciplinaRouter);
+    app.use('/anos', anoRouter);
+    app.use('/atividades', atividadeRouter);
     app.use('/jogos', jogoRouter);
     app.use('/papeis', papeisRouter);
 };

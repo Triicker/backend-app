@@ -29,6 +29,7 @@ const testConnection = async () => {
 
 export default {
   query: (text, params) => pool.query(text, params),
+  connect: () => pool.connect(), // Exporta o método connect do pool para transações
   testConnection, // Exporta a função de teste
   getPool: () => pool // Exporta o pool para casos de uso avançados (transações, etc.)
 };

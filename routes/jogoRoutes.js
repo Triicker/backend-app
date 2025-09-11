@@ -4,7 +4,8 @@ import {
     getAllJogos,
     getJogoById,
     updateJogo,
-    deleteJogo
+    deleteJogo,
+    getJogosParaAluno
 } from '../Controllers/jogoController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
@@ -14,6 +15,9 @@ const router = Router();
 router.use(verifyJWT);
 
 // TODO: Adicionar verificação de papel (role-based access control) para rotas de escrita
+
+// Rota específica para a visão do aluno logado
+router.get('/para-aluno', getJogosParaAluno);
 
 router.post('/', createJogo);
 router.get('/', getAllJogos);
