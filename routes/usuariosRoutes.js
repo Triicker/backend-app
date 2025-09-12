@@ -9,8 +9,8 @@ import {
     updateUser,
     softDeleteUser,
     reactivateUser
-} from '../controllers/userController.js';
-import { getConquistasByUsuario } from '../controllers/usuarioConquistaController.js';
+} from '../Controllers/userController.js';
+import { getConquistasByUsuario } from '../Controllers/usuarioConquistaController.js';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createEscola, getAllEscolas, getEscolaById, updateEscola, deleteEscola } from '../controllers/escolaController.js';
+import { createEscola, getAllEscolas, getEscolaById, updateEscola, deleteEscola } from '../Controllers/escolaController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();

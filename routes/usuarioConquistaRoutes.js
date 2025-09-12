@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { assignConquista, getConquistasByUsuario, removeConquista } from '../controllers/usuarioConquistaController.js';
+import { assignConquista, getConquistasByUsuario, removeConquista } from '../Controllers/usuarioConquistaController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();

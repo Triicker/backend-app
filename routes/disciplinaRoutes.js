@@ -6,7 +6,7 @@ import {
     updateDisciplina,
     deleteDisciplina,
     getJogosByDisciplina
-} from '../controllers/disciplinaController.js';
+} from '../Controllers/disciplinaController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();

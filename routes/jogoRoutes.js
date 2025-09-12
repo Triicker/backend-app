@@ -6,7 +6,7 @@ import {
     updateJogo,
     deleteJogo,
     getJogosParaAluno
-} from '../controllers/jogoController.js';
+} from '../Controllers/jogoController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();

@@ -5,7 +5,7 @@ import {
     getAtividadesByProfessor,
     deleteAtividade,
     getAtividadesMinhaSala
-} from '../controllers/atividadeController.js';
+} from '../Controllers/atividadeController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
