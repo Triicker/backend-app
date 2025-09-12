@@ -7,7 +7,7 @@ import {
     updateSala,
     deleteSala,
     getSalasMinhaEscola,
-} from '../Controllers/salaController.js';
+} from '../controllers/salaController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
