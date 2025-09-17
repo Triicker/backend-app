@@ -5,7 +5,7 @@ import {
     getVideoById,
     updateVideo,
     deleteVideo
-} from '../controllers/videoController.js';
+} from '../Controllers/videoController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
