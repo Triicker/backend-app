@@ -10,6 +10,7 @@ import disciplinaRouter from './disciplinaRoutes.js';
 import anoRouter from './anoRoutes.js';
 import atividadeRouter from './atividadeRoutes.js';
 import jogoRouter from './jogoRoutes.js';
+import videoRouter from './videoRoutes.js';
 import papeisRouter from './papeisRoutes.js';
 
 const configureRoutes = (app) => {
@@ -31,6 +32,7 @@ const configureRoutes = (app) => {
     app.use('/anos', anoRouter);
     app.use('/atividades', atividadeRouter);
     app.use('/jogos', jogoRouter);
+    app.use('/videos', videoRouter);
     app.use('/papeis', papeisRouter);
 };
 

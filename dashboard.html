@@ -215,6 +215,16 @@
             { name: 'disciplinaId', label: 'Filtrar por Disciplina', type: 'select', dataSource: '/disciplinas' },
             { name: 'anoId', label: 'Filtrar por Ano', type: 'select', dataSource: '/anos' }
         ]},
+        videos: { name: 'Vídeos', path: '/videos', fields: [
+            { name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' },
+            { name: 'url_video', label: 'URL do Vídeo', required: true }, { name: 'url_thumbnail', label: 'URL da Thumbnail' },
+            { name: 'duracao_segundos', label: 'Duração (segundos)', type: 'number' },
+            { name: 'disciplinaIds', label: 'Disciplinas', type: 'checkbox-group', dataSource: '/disciplinas' },
+            { name: 'anoIds', label: 'Anos', type: 'checkbox-group', dataSource: '/anos' }
+        ], filters: [
+            { name: 'disciplinaId', label: 'Filtrar por Disciplina', type: 'select', dataSource: '/disciplinas' },
+            { name: 'anoId', label: 'Filtrar por Ano', type: 'select', dataSource: '/anos' }
+        ]},
         disciplinas: { name: 'Disciplinas', path: '/disciplinas', fields: [{ name: 'nome', label: 'Nome', required: true }] },
         anos: { name: 'Anos', path: '/anos', fields: [{ name: 'nome', label: 'Nome', required: true }] },
         conquistas: { name: 'Conquistas', path: '/conquistas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' }, { name: 'icone_url', label: 'URL do Ícone' }] },
@@ -231,7 +241,11 @@
             { name: 'data_fim', label: 'Data de Fim (opcional)', type: 'date' }
         ]},
         pontuacoes: { name: 'Pontuações', path: '/pontuacoes', fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_jogo', label: 'ID do Jogo', required: true, placeholder: 'UUID do jogo' }, { name: 'pontuacao', label: 'Pontuação', type: 'number', required: true }] },
-        'usuarios-conquistas': { name: 'Atribuir Conquista', path: '/usuarios-conquistas', isCreateOnly: true, fields: [{ name: 'id_usuario', label: 'ID do Usuário', required: true }, { name: 'id_conquista', label: 'ID da Conquista', required: true }] }
+        'usuarios-conquistas': { name: 'Atribuir Conquista', path: '/usuarios-conquistas', isCreateOnly: true, fields: [
+            { name: 'id_usuario', label: 'ID do Usuário', required: true }, 
+            { name: 'id_conquista', label: 'ID da Conquista', required: true },
+            { name: 'id_jogo', label: 'ID do Jogo (opcional)', placeholder: 'UUID do jogo onde foi ganha' }
+        ] }
     };
 
     loginForm.addEventListener('submit', async (e) => {

@@ -14,7 +14,7 @@ router.post('/', assignConquista);
 // Lista todas as conquistas de um usuário específico
 router.get('/usuario/:id_usuario', getConquistasByUsuario);
 
-// Remove uma conquista de um usuário
-router.delete('/:id_usuario/:id_conquista', removeConquista);
+// Remove um registro de conquista desbloqueada pelo seu ID único
+router.delete('/:id', removeConquista);
 
 export default router;
