@@ -2,24 +2,43 @@ import db from '../db/index.js';
 
 // CREATE
 export const createPontuacao = async (req, res, next) => {
-    const { id_usuario, id_jogo, pontuacao } = req.body;
+    // O campo addToTotal (booleano) virá do cliente.
+    // true: primeira vez jogando, soma na pontuação total do usuário.
+    // false: já jogou antes, apenas registra no histórico.
+    const { id_usuario, id_jogo, pontuacao, addToTotal } = req.body;
 
     if (!id_usuario || !id_jogo || pontuacao === undefined) {
         return res.status(400).json({ error: 'Os campos id_usuario, id_jogo e pontuacao são obrigatórios.' });
     }
 
+    const client = await db.connect();
     try {
-        const { rows } = await db.query(
-            'INSERT INTO pontuacoes (id_usuario, id_jogo, pontuacao) VALUES ($1, $2, $3) RETURNING *',
-            [id_usuario, id_jogo, pontuacao]
-        );
-        res.status(201).json(rows[0]);
+        await client.query('BEGIN');
+
+        // 1. Sempre insere o registro na tabela de histórico 'pontuacoes'
+        const insertPontuacaoQuery =
+            'INSERT INTO pontuacoes (id_usuario, id_jogo, pontuacao) VALUES ($1, $2, $3) RETURNING *';
+        
+        const { rows } = await client.query(insertPontuacaoQuery, [id_usuario, id_jogo, pontuacao]);
+        const novaPontuacao = rows[0];
+
+        // 2. Se addToTotal for true, atualiza a pontuação total na tabela de usuários
+        if (addToTotal === true) {
+            // Esta query assume que existe uma coluna 'pontuacao_total' na tabela 'usuarios'.
+            const updateUserScoreQuery = 'UPDATE usuarios SET pontuacao_total = pontuacao_total + $1 WHERE id = $2';
+            await client.query(updateUserScoreQuery, [pontuacao, id_usuario]);
+        }
+
+        await client.query('COMMIT');
+        res.status(201).json(novaPontuacao);
     } catch (error) {
+        await client.query('ROLLBACK');
         if (error.code === '23503') { // foreign_key_violation
-            // Este erro agora pode ser por um usuário ou um jogo inexistente.
             return res.status(404).json({ error: 'Usuário ou Jogo não encontrado.' });
         }
         next(error);
+    } finally {
+        client.release();
     }
 };
 
@@ -118,6 +137,35 @@ export const getRankingByEscola = async (req, res, next) => {
             LIMIT $3;
         `;
         const { rows } = await db.query(query, [id_escola, id_jogo, limit]);
+        res.status(200).json(rows);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// READ RANKING BY SALA
+export const getRankingBySala = async (req, res, next) => {
+    const { id_sala, id_jogo } = req.params;
+    const limit = req.query.limit || 100;
+
+    try {
+        const query = `
+            SELECT
+                RANK() OVER (ORDER BY MAX(p.pontuacao) DESC) as "rank",
+                u.id as id_usuario,
+                u.nome as nome_usuario,
+                u.username,
+                s.nome as nome_sala,
+                MAX(p.pontuacao) as pontuacao_maxima
+            FROM pontuacoes p
+            JOIN usuarios u ON p.id_usuario = u.id
+            JOIN salas s ON u.id_sala = s.id
+            WHERE u.id_sala = $1 AND p.id_jogo = $2
+            GROUP BY u.id, s.nome
+            ORDER BY pontuacao_maxima DESC
+            LIMIT $3;
+        `;
+        const { rows } = await db.query(query, [id_sala, id_jogo, limit]);
         res.status(200).json(rows);
     } catch (error) {
         next(error);

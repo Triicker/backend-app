@@ -97,7 +97,7 @@
     }
 
     function generateCrudHtml(resource, resourceKey) {
-        const { name, path, fields = [], isReadOnly, isCreateOnly, filters = [] } = resource;
+        const { name, path, fields = [], isReadOnly, isCreateOnly, filters = [], customActions = [] } = resource;
         const id = resourceKey; // Usar a chave do objeto como ID único
 
         const createFormFields = fields.map(f => `
@@ -148,6 +148,10 @@
             </form>
         ` : '';
 
+        const customActionButtons = customActions.map(ca => 
+            `<button type="button" class="btn-update" data-resource="${id}" data-action="${ca.action}">${ca.label}</button>`
+        ).join('');
+
         return `
             <div class="resource-section">
                 <h2>${name} (<code>${path}</code>)</h2>
@@ -160,7 +164,8 @@
                     ${!isReadOnly ? `
                     <button type="button" class="btn-update" data-resource="${id}" data-action="update">Atualizar</button>
                     <button type="button" class="btn-delete" data-resource="${id}" data-action="delete">Deletar</button>
-                    ` : ''}
+                    ${customActionButtons}
+                    ` : ''}                    
                 </form>
                 ` : ''}
 
@@ -203,8 +208,17 @@
     }
 
     const resources = {
-        cidades: { name: 'Cidades', path: '/cidades', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'estado', label: 'Estado (UF)', required: true, placeholder: 'Ex: BA' }] },
-        escolas: { name: 'Escolas', path: '/escolas', fields: [{ name: 'nome', label: 'Nome', required: true }, { name: 'id_cidade', label: 'ID da Cidade', required: true, placeholder: 'UUID da cidade' }] },
+        cidades: { name: 'Cidades', path: '/cidades', fields: [
+            { name: 'nome', label: 'Nome', required: true }, 
+            { name: 'estado', label: 'Estado (UF)', required: true, placeholder: 'Ex: BA' }
+        ]},
+        escolas: { name: 'Escolas', path: '/escolas', fields: [
+            { name: 'nome', label: 'Nome', required: true }, 
+            { name: 'id_cidade', label: 'Cidade', type: 'select', dataSource: '/cidades', required: true }
+        ], customActions: [
+            { label: 'Listar Inativas', action: 'getInactive' },
+            { label: 'Reativar', action: 'reactivate' }
+        ]},
         salas: { name: 'Salas', path: '/salas', fields: [{ name: 'nome', label: 'Nome', required: true, placeholder: 'Ex: 6ºA' }, { name: 'id_escola', label: 'ID da Escola', required: true, placeholder: 'UUID da escola' }] },
         jogos: { name: 'Jogos', path: '/jogos', fields: [
             { name: 'nome', label: 'Nome', required: true }, { name: 'descricao', label: 'Descrição' },
@@ -234,6 +248,9 @@
             { name: 'id_escola', label: 'Escola', type: 'select', dataSource: '/escolas', required: true }, 
             { name: 'id_sala', label: 'Sala (opcional)', type: 'select', dataSource: '/salas' },
             { name: 'matricula', label: 'Matrícula (opcional)' }, { name: 'ano', label: 'Ano (opcional)' },
+        ], customActions: [
+            { label: 'Listar Inativos', action: 'getInactive' },
+            { label: 'Reativar', action: 'reactivate' }
         ]},
         atividades: { name: 'Atividades (atribuir jogo)', path: '/atividades', isReadOnly: true, fields: [
             { name: 'id_jogo', label: 'Jogo', type: 'select', dataSource: '/jogos', required: true },
@@ -290,6 +307,22 @@
                 return;
             }
 
+            if (action === 'getInactive') {
+                displayRequest('GET', `${resource.path}/inativos`, null);
+                const result = await apiCall(`${resource.path}/inativos`, 'GET');
+                displayResponse(result);
+                return;
+            }
+
+            if (action === 'reactivate') {
+                const idToReactivate = prompt(`Insira o ID do(a) ${resource.name} para reativar:`);
+                if (!idToReactivate) return;
+                displayRequest('PATCH', `${resource.path}/${idToReactivate}/reactivate`, null);
+                const result = await apiCall(`${resource.path}/${idToReactivate}/reactivate`, 'PATCH');
+                displayResponse(result);
+                return;
+            }
+
             // Ações que precisam de um ID
             const form = button.closest('form');
             if (!form) return;
@@ -305,7 +338,7 @@
             if (action === 'update') {
                 const updateJson = prompt(`Insira o JSON para atualizar o(a) ${resource.name} com ID: ${id}\n\nExemplo: {"nome": "Novo Nome"}`);
                 if (!updateJson) return;
-                try {
+                try { // A rota de usuários usa PATCH, as outras PUT por enquanto
                     const body = JSON.parse(updateJson);
                     const method = resourceId === 'usuarios' ? 'PATCH' : 'PUT';
                     displayRequest(method, `${resource.path}/${id}`, body);

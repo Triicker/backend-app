@@ -2,7 +2,7 @@ import db from '../db/index.js';
 import bcrypt from 'bcrypt';
 
 // Colunas a serem retornadas para evitar expor a senha
-const publicUserColumns = 'id, nome, username, id_papel, id_escola, id_sala, matricula, ano, data_criacao, data_atualizacao, atividade';
+const publicUserColumns = 'id, nome, username, id_papel, id_escola, id_sala, matricula, ano, data_criacao, data_atualizacao, atividade, pontuacao_total';
 
 export const createUser = async (req, res, next) => {
     const { nome, username, senha, id_papel, id_escola, id_sala, matricula, ano } = req.body;

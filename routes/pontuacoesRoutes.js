@@ -3,14 +3,15 @@ import {
     createPontuacao,
     getAllPontuacoes,
     getPontuacoesByUsuario,
-    getPontuacoesBySala,
+    getPontuacoesBySala as getHistoricoBySala, // Renomeado para evitar conflito
     getRankingByJogo,
     getRankingByEscola,
     getRankingByCidade,
     getRankingByEstado,
     updatePontuacao,
     getUsuarioRankByJogo,
-    deletePontuacao
+    deletePontuacao,
+    getRankingBySala
 } from '../Controllers/pontuacaoController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
@@ -22,6 +23,8 @@ const router = Router();
 router.get('/ranking/jogo/:id_jogo', getRankingByJogo);
 // READ - Obter o ranking de uma escola para um jogo
 router.get('/ranking/escola/:id_escola/jogo/:id_jogo', getRankingByEscola);
+// READ - Obter o ranking de uma sala para um jogo
+router.get('/ranking/sala/:id_sala/jogo/:id_jogo', getRankingBySala);
 // READ - Obter o ranking de uma cidade para um jogo
 router.get('/ranking/cidade/:id_cidade/jogo/:id_jogo', getRankingByCidade);
 // READ - Obter o ranking de um estado (regional) para um jogo
@@ -43,7 +46,7 @@ router.get('/', getAllPontuacoes);
 router.get('/usuario/:id_usuario', getPontuacoesByUsuario);
 
 // READ - Obter pontuações de uma sala específica
-router.get('/sala/:id_sala', getPontuacoesBySala);
+router.get('/sala/:id_sala', getHistoricoBySala);
 
 // UPDATE - Atualizar uma pontuação
 router.put('/:id', updatePontuacao);

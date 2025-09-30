@@ -37,6 +37,15 @@ export const getSalasMinhaEscola = async (req, res, next) => {
     }
 
     try {
+        // Verifica se a escola de destino está ativa
+        const escolaResult = await db.query('SELECT ativo FROM escolas WHERE id = $1', [id_escola]);
+        if (escolaResult.rowCount === 0) {
+            return res.status(404).json({ error: 'A escola especificada (id_escola) não existe.' });
+        }
+        if (escolaResult.rows[0].ativo !== 1) {
+            return res.status(400).json({ error: 'Não é possível criar salas em uma escola inativa.' });
+        }
+
         const { rows } = await db.query(
             'SELECT id, nome FROM salas WHERE id_escola = $1 ORDER BY nome ASC',
             [id_escola]
