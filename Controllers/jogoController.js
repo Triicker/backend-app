@@ -75,7 +75,7 @@ export const getJogosParaAluno = async (req, res, next) => {
     }
 };
 
-// READ ALL
+// READ ALL (mantido para compatibilidade)
 export const getAllJogos = async (req, res, next) => {
     const { disciplinaId, anoId } = req.query;
     try {
@@ -95,6 +95,123 @@ export const getAllJogos = async (req, res, next) => {
         const { rows } = await db.query(query, params);
         res.status(200).json(rows);
     } catch (error) {
+        next(error);
+    }
+};
+
+// READ ALL WITH RELATIONS - ENDPOINT OTIMIZADO COM MELHORES PRÁTICAS 🚀
+export const getAllJogosWithRelations = async (req, res, next) => {
+    const { disciplinaId, anoId } = req.query;
+    const { id: authenticatedUserId, id_papel, id_ano: userAno } = req.user;
+    
+    try {
+        // Abordagem otimizada usando Common Table Expressions e agregação eficiente
+        // Baseada nas melhores práticas do PostgreSQL para JSON aggregation
+        let baseQuery = `
+            WITH game_disciplines AS (
+                SELECT 
+                    jd.id_jogo,
+                    JSONB_AGG(
+                        JSONB_BUILD_OBJECT('id', d.id, 'nome', d.nome)
+                        ORDER BY d.nome
+                    ) as disciplinas
+                FROM jogos_disciplinas jd
+                JOIN disciplinas d ON jd.id_disciplina = d.id
+                GROUP BY jd.id_jogo
+            ),
+            game_years AS (
+                SELECT 
+                    ja.id_jogo,
+                    JSONB_AGG(
+                        JSONB_BUILD_OBJECT('id', a.id, 'nome', a.nome)
+                        ORDER BY a.nome
+                    ) as anos
+                FROM jogos_anos ja
+                JOIN anos a ON ja.id_ano = a.id
+                GROUP BY ja.id_jogo
+            )
+            SELECT 
+                j.id,
+                j.nome,
+                j.descricao,
+                j.url_jogo,
+                j.url_thumbnail,
+                COALESCE(gd.disciplinas, '[]'::jsonb) as disciplinas,
+                COALESCE(gy.anos, '[]'::jsonb) as anos
+            FROM jogos j
+            LEFT JOIN game_disciplines gd ON j.id = gd.id_jogo
+            LEFT JOIN game_years gy ON j.id = gy.id_jogo
+        `;
+        
+        const params = [];
+        const conditions = [];
+        
+        // Filtros otimizados usando EXISTS para melhor performance
+        if (disciplinaId) {
+            conditions.push(`EXISTS (
+                SELECT 1 FROM jogos_disciplinas jd_filter 
+                WHERE jd_filter.id_jogo = j.id 
+                AND jd_filter.id_disciplina = $${params.push(disciplinaId)}
+            )`);
+        }
+        
+        if (anoId) {
+            conditions.push(`EXISTS (
+                SELECT 1 FROM jogos_anos ja_filter 
+                WHERE ja_filter.id_jogo = j.id 
+                AND ja_filter.id_ano = $${params.push(anoId)}
+            )`);
+        }
+        
+        // 🎯 REGRA DE NEGÓCIO: Estudantes veem apenas jogos do seu ano ou jogos sem ano específico
+        if (id_papel === 2 && userAno) { // 2 = papel de estudante
+            conditions.push(`(
+                EXISTS (
+                    SELECT 1 FROM jogos_anos ja_student 
+                    WHERE ja_student.id_jogo = j.id 
+                    AND ja_student.id_ano = $${params.push(userAno)}
+                ) 
+                OR NOT EXISTS (
+                    SELECT 1 FROM jogos_anos ja_any 
+                    WHERE ja_any.id_jogo = j.id
+                )
+            )`);
+        }
+        
+        // Aplicar filtros WHERE se existirem
+        if (conditions.length > 0) {
+            baseQuery += ` WHERE ${conditions.join(' AND ')}`;
+        }
+        
+        // Ordenação consistente
+        baseQuery += ` ORDER BY j.nome ASC`;
+        
+        console.log(`[DB] 🚀 Executando query otimizada para usuário papel=${id_papel}, ano=${userAno || 'N/A'}`);
+        console.log(`[DB] 📊 Filtros aplicados: disciplina=${disciplinaId || 'todas'}, ano=${anoId || 'todos'}`);
+        
+        const startTime = Date.now();
+        const { rows } = await db.query(baseQuery, params);
+        const queryTime = Date.now() - startTime;
+        
+        console.log(`[DB] ✅ Query executada em ${queryTime}ms - Encontrados ${rows.length} jogos`);
+        
+        // Log de exemplo para debugging (apenas o primeiro jogo)
+        if (rows.length > 0) {
+            const exemplo = rows[0];
+            console.log(`[DB] 📋 Exemplo de jogo retornado:`, {
+                nome: exemplo.nome,
+                disciplinas_count: exemplo.disciplinas?.length || 0,
+                anos_count: exemplo.anos?.length || 0,
+                disciplinas_nomes: exemplo.disciplinas?.map(d => d.nome) || [],
+                anos_nomes: exemplo.anos?.map(a => a.nome) || []
+            });
+        }
+        
+        res.status(200).json(rows);
+        
+    } catch (error) {
+        console.error('[DB] ❌ Erro ao buscar jogos com relações:', error);
+        console.error('[DB] 🔍 Query parameters:', params);
         next(error);
     }
 };

@@ -12,6 +12,7 @@ import atividadeRouter from './atividadeRoutes.js';
 import jogoRouter from './jogoRoutes.js';
 import videoRouter from './videoRoutes.js';
 import papeisRouter from './papeisRoutes.js';
+import analyticsRouter from './analyticsRoutes.js';
 
 const configureRoutes = (app) => {
     // Rota de "Health Check" para verificar se a API está no ar
@@ -34,6 +35,7 @@ const configureRoutes = (app) => {
     app.use('/jogos', jogoRouter);
     app.use('/videos', videoRouter);
     app.use('/papeis', papeisRouter);
+    app.use('/analytics', analyticsRouter);
 };
 
 export default configureRoutes;

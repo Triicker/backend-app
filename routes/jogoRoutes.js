@@ -2,11 +2,12 @@ import { Router } from 'express';
 import {
     createJogo,
     getAllJogos,
+    getAllJogosWithRelations,
     getJogoById,
     updateJogo,
     deleteJogo,
     getJogosParaAluno
-} from '../Controllers/jogoController.js';
+} from '../controllers/jogoController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
@@ -18,6 +19,9 @@ router.use(verifyJWT);
 
 // Rota específica para a visão do aluno logado
 router.get('/para-aluno', getJogosParaAluno);
+
+// 🚀 NOVO ENDPOINT OTIMIZADO - Jogos com relações em uma única query
+router.get('/categorized', getAllJogosWithRelations);
 
 router.post('/', createJogo);
 router.get('/', getAllJogos);
