@@ -9,7 +9,7 @@ import {
     saveGameSession,
     saveGamePlay,
     getDetailedRanking
-} from '../controllers/analyticsController.js';
+} from '../Controllers/analyticsController.js';
 import { verifyJWT } from '../authMiddleware.js';
 
 const router = Router();
